@@ -12,14 +12,25 @@ use verdict_core::inference::{sha256, signature_text, InferenceRequest};
 fn main() {
     let key = SigningKey::from_slice(&[0x42; 32]).unwrap();
     let point = key.verifying_key().to_encoded_point(false);
-    let address: [u8; 20] = Keccak256::digest(&point.as_bytes()[1..])[12..].try_into().unwrap();
+    let address: [u8; 20] = Keccak256::digest(&point.as_bytes()[1..])[12..]
+        .try_into()
+        .unwrap();
 
     let model = "Qwen/Qwen3.8-27B";
-    let instructions = "Fund open-source developer tooling for NEAR.\nNo token launches, no closed-source work.";
+    let instructions =
+        "Fund open-source developer tooling for NEAR.\nNo token launches, no closed-source work.";
     let submission = "Title: near-lint\n\nAn MIT-licensed linter for near-sdk contracts that flags unchecked promise results — “safety first”.";
     let options = vec!["APPROVE".to_owned(), "REJECT".to_owned()];
     let tag = "verdict.testnet#0:5f3a9c0d1e2b4a67";
-    let body = InferenceRequest { model, instructions, submission, options: &options, tag, max_tokens: 400 }.body();
+    let body = InferenceRequest {
+        model,
+        instructions,
+        submission,
+        options: &options,
+        tag,
+        max_tokens: 400,
+    }
+    .body();
     let request_hash = sha256(body.as_bytes());
 
     let response = json!({
