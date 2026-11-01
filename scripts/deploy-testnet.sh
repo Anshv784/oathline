@@ -32,9 +32,9 @@ curl -fsSL "$RUNNER_URL" | shasum -a 256 | grep -q "$RUNNER_SHA" \
   || { echo "RUNNER_URL does not serve the runner just built ($RUNNER_SHA)"; exit 1; }
 
 step "Create $VERDICT and $DAO"
-near account create-account fund-myself "$VERDICT" '6 NEAR' autogenerate-new-keypair save-to-keychain \
+near account create-account fund-myself "$VERDICT" '4.5 NEAR' autogenerate-new-keypair save-to-keychain \
   sign-as "$OWNER" "${NET[@]}" "${SIGN[@]}"
-near account create-account fund-myself "$DAO" '3 NEAR' autogenerate-new-keypair save-to-keychain \
+near account create-account fund-myself "$DAO" '2 NEAR' autogenerate-new-keypair save-to-keychain \
   sign-as "$OWNER" "${NET[@]}" "${SIGN[@]}"
 
 step "Deploy Verdict"

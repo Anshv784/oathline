@@ -109,6 +109,24 @@ of `A-Z`, `0-9` or `_`; instructions and submission are up to 4096 bytes
 each. The deposit pays for storing the request and its answer; the rest goes
 to OutLayer, which refunds what it does not use.
 
+## Live on testnet
+
+| | |
+|---|---|
+| Verdict | [`verdict.anshv784.testnet`](https://testnet.nearblocks.io/address/verdict.anshv784.testnet) |
+| Consumer | [`charter-dao.anshv784.testnet`](https://testnet.nearblocks.io/address/charter-dao.anshv784.testnet) |
+| Registered model | `Qwen/Qwen3.8-27B`, key `0x835ab53d20294ef795906dff21ae4c045336aa26`, TCB `UpToDate` |
+| Registration tx | [`5ZAVDFT5…`](https://testnet.nearblocks.io/txns/5ZAVDFT5WHyhxiZK7ZaqnToFztc5EAUAibhYTv7Sn2Lo) |
+
+The registration used live NEAR AI evidence fetched with the contract's
+nonce. Gas: `tee-verifier` 175.8 Tgas for the Intel quote, Verdict's binding
+rules 7 Tgas, 194.8 Tgas in total.
+
+```sh
+near contract call-function as-read-only verdict.anshv784.testnet get_model \
+  json-args '{"model":"Qwen/Qwen3.8-27B"}' network-config testnet now
+```
+
 ## Deploying
 
 `scripts/deploy-testnet.sh` builds everything, deploys both contracts,
