@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["crates/verdict-core"]
+members = ["crates/verdict-core", "contracts/verdict"]
 
 [workspace.package]
 version = "0.1.0"
