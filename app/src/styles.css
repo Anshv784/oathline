@@ -1,0 +1,89 @@
+@import "tailwindcss";
+
+/* Paper and ink. One neutral family (warm), and colour only where it means
+   something: pass, fail, pending. Values checked for WCAG AA on --paper. */
+:root {
+  --paper: #f6f4ee;
+  --surface: #fffefa;
+  --ink: #17160f;
+  --ink-2: #4c4a42; /* 8.0:1 on paper */
+  --rule: #dcd8cc;
+  --rule-strong: #bdb8a8;
+  --pass: #17663f; /* 6.6:1 */
+  --pass-wash: #e3efe6;
+  --fail: #a5281c; /* 6.2:1 */
+  --fail-wash: #f6e4e0;
+  --wait: #7a5a08; /* 5.6:1 */
+  --wait-wash: #f3ead2;
+  --focus: #2457c5;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #121210;
+    --surface: #1a1a17;
+    --ink: #edeae2;
+    --ink-2: #aeaa9d;
+    --rule: #2e2d28;
+    --rule-strong: #47453d;
+    --pass: #5fcf95;
+    --pass-wash: #17271e;
+    --fail: #f4877a;
+    --fail-wash: #2c1a17;
+    --wait: #e2bd5c;
+    --wait-wash: #2a2415;
+    --focus: #8fb0ff;
+  }
+}
+
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --color-paper: var(--paper);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-pass: var(--pass);
+  --color-pass-wash: var(--pass-wash);
+  --color-fail: var(--fail);
+  --color-fail-wash: var(--fail-wash);
+  --color-wait: var(--wait);
+  --color-wait-wash: var(--wait-wash);
+  --color-focus: var(--focus);
+}
+
+html {
+  background: var(--paper);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss02";
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .fade-in {
+    animation: fade-in 180ms ease-out both;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+}
