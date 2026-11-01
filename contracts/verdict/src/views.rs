@@ -221,6 +221,14 @@ pub enum Outcome {
     Failed { reason: String },
 }
 
+/// The result of `ask`, as seen by a contract that chained `.then` on it.
+#[near(serializers = [json])]
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Settled {
+    pub request_id: U64,
+    pub outcome: Outcome,
+}
+
 impl From<&Status> for Outcome {
     fn from(status: &Status) -> Self {
         match status {

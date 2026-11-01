@@ -439,7 +439,7 @@ fn deliver(verdict: &mut Verdict, id: u64, result: PromiseResult) -> Outcome {
         Default::default(),
         vec![result],
     );
-    verdict.on_inference(U64(id))
+    verdict.on_inference(U64(id)).outcome
 }
 
 #[test]
