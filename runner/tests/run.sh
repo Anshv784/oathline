@@ -20,7 +20,20 @@ sleep 0.5
 BODY='{"model":"Qwen/Qwen3.8-27B","messages":[{"role":"user","content":"exact bytes é"}]}'
 INPUT=$(python3 -c 'import json,sys; print(json.dumps({"model":"Qwen/Qwen3.8-27B","body":sys.argv[1]}))' "$BODY")
 
-OUTPUT=$(printf '%s' "$INPUT" | wasmtime run -S http --env NEARAI_API_KEY=test-key "$WASM")
+run() {
+  printf '%s' "$INPUT" | wasmtime run -S http --env NEARAI_API_KEY=test-key \
+    --env VERDICT_CONTRACT=verdict.testnet --env NEAR_PREDECESSOR_ID="$1" "$WASM"
+}
+
+# Any caller but the configured contract is refused before NEAR AI is called.
+REFUSED=$(run someone-else.testnet)
+case "$REFUSED" in
+  *'"error":"called by \"someone-else.testnet\", not by verdict.testnet"'*) ;;
+  *) echo "expected a refusal, got: $REFUSED"; exit 1 ;;
+esac
+[ ! -s "$WORK/requests.log" ] || { echo "a refused caller reached NEAR AI"; exit 1; }
+
+OUTPUT=$(run verdict.testnet)
 
 python3 - "$WORK/requests.log" "$BODY" "$OUTPUT" <<'PY'
 import base64, hashlib, json, sys
@@ -38,5 +51,5 @@ assert len(gets) == 2 and "signing_algo=ecdsa" in gets[0]["path"], gets
 assert "error" not in output, output
 raw = base64.b64decode(output["response"])
 assert output["signature"]["text"].endswith(hashlib.sha256(raw).hexdigest())
-print("runner: one completion, exact body, signature retried once, raw response returned")
+print("runner: foreign caller refused; one completion, exact body, signature retried once, raw response returned")
 PY
