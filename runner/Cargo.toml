@@ -1,0 +1,24 @@
+[package]
+name = "verdict-runner"
+description = "OutLayer program that sends Verdict's request body to NEAR AI exactly once and returns the raw response with the model's signature."
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[[bin]]
+name = "verdict-runner"
+path = "src/main.rs"
+
+[dependencies]
+base64 = "0.22"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+wasi-http-client = "0.2.1"
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+codegen-units = 1
+panic = "abort"
