@@ -634,6 +634,26 @@ fn failed_outlayer_call_refunds_the_requester() {
 }
 
 #[test]
+fn oversized_runner_output_fails_without_a_refund() {
+    let mut verdict = contract();
+    with_registered_key(&mut verdict, &model_key());
+    let id = ask(&mut verdict);
+    let huge = json!({ "error": "x".repeat(20 * 1024) })
+        .to_string()
+        .into_bytes();
+
+    let outcome = deliver(&mut verdict, id, PromiseResult::Successful(huge));
+
+    assert_eq!(
+        outcome,
+        Outcome::Failed {
+            reason: "runner output is too large".into()
+        }
+    );
+    assert!(near_sdk::test_utils::get_created_receipts().is_empty());
+}
+
+#[test]
 #[should_panic(expected = "request already settled")]
 fn a_request_settles_once() {
     let mut verdict = contract();

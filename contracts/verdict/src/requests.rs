@@ -10,7 +10,7 @@
 use base64::Engine;
 use near_sdk::json_types::U64;
 use near_sdk::serde::Deserialize;
-use near_sdk::{env, near, require, AccountId, Gas, NearToken, Promise};
+use near_sdk::{env, near, require, AccountId, Gas, NearToken, Promise, PromiseError};
 use verdict_core::inference::{verify_response, InferenceRequest, SignedResponse};
 
 use crate::crypto::NearCrypto;
@@ -22,6 +22,8 @@ use crate::{events, Verdict, VerdictExt};
 
 pub const MAX_TEXT_BYTES: usize = 4096;
 pub const MAX_RESPONSE_BYTES: usize = 4096;
+/// Base64 of the largest accepted response plus the signature object.
+const MAX_RUNNER_OUTPUT_BYTES: usize = 16 * 1024;
 pub const MAX_TOKENS: u32 = 400;
 pub const MAX_OPTIONS: usize = 8;
 pub const MAX_OPTION_CHARS: usize = 32;
@@ -276,10 +278,13 @@ impl Verdict {
             .unwrap_or_else(|| env::panic_str("unknown request"));
         require!(request.status == Status::Pending, "request already settled");
 
-        let status = match env::promise_result_checked(0, 16 * 1024) {
+        let status = match env::promise_result_checked(0, MAX_RUNNER_OUTPUT_BYTES) {
             Ok(bytes) => self.settle(&request, &bytes),
-            Err(_) => {
-                // OutLayer refused the call, so the deposit came back here.
+            // OutLayer rejected `request_execution` itself, so NEAR returned
+            // the attached deposit to this contract: pass it back. (When the
+            // call was admitted, OutLayer settles timeouts and refunds the
+            // payer, the requester, on its own.)
+            Err(PromiseError::Failed) => {
                 Promise::new(request.requester.clone())
                     .transfer(request.forwarded)
                     .detach();
@@ -287,6 +292,11 @@ impl Verdict {
                     reason: "OutLayer did not run the request".to_owned(),
                 }
             }
+            // Too long (or any future variant): the runner ran and OutLayer
+            // kept its fee, so nothing came back to refund.
+            Err(_) => Status::Failed {
+                reason: "runner output is too large".to_owned(),
+            },
         };
         request.status = status;
         let outcome = Outcome::from(&request.status);
