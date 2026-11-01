@@ -627,6 +627,15 @@ fn failed_outlayer_call_refunds_the_requester() {
             reason: "OutLayer did not run the request".into()
         }
     );
+    let refunds = near_sdk::test_utils::get_created_receipts()
+        .into_iter()
+        .flat_map(|receipt| receipt.actions)
+        .filter(|action| matches!(action, near_sdk::mock::MockAction::Transfer { .. }))
+        .count();
+    assert_eq!(
+        refunds, 1,
+        "a rejected call returns the deposit to the requester"
+    );
     assert!(matches!(
         verdict.requests.get(id as u32).unwrap().status,
         Status::Failed { .. }
@@ -650,7 +659,15 @@ fn oversized_runner_output_fails_without_a_refund() {
             reason: "runner output is too large".into()
         }
     );
-    assert!(near_sdk::test_utils::get_created_receipts().is_empty());
+    let refunds = near_sdk::test_utils::get_created_receipts()
+        .into_iter()
+        .flat_map(|receipt| receipt.actions)
+        .filter(|action| matches!(action, near_sdk::mock::MockAction::Transfer { .. }))
+        .count();
+    assert_eq!(
+        refunds, 0,
+        "the contract must not refund from its own balance"
+    );
 }
 
 #[test]
