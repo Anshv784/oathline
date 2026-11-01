@@ -9,7 +9,9 @@
 //! The chat completion is requested exactly once. It is never retried, so
 //! whoever operates the worker cannot ask again and keep the answer they
 //! prefer; only fetching the signature for that one completion is retried.
-//! The runner does no checking of its own: the contract verifies everything.
+//! The runner does no checking of the answer: the contract verifies that.
+//! It only refuses to spend the NEAR AI key for any caller other than the
+//! Verdict contract named in its secrets.
 
 use std::io::{self, Read, Write};
 use std::thread::sleep;
@@ -53,6 +55,7 @@ fn run() -> Result<Value, String> {
     let input: Input = serde_json::from_str(&stdin).map_err(|e| format!("bad input: {e}"))?;
     let api_key = std::env::var("NEARAI_API_KEY")
         .map_err(|_| "NEARAI_API_KEY is not set in the OutLayer secrets".to_owned())?;
+    check_caller()?;
     let auth = format!("Bearer {api_key}");
 
     let response = Client::new()
@@ -86,6 +89,20 @@ fn run() -> Result<Value, String> {
         "response": base64::engine::general_purpose::STANDARD.encode(&bytes),
         "signature": signature,
     }))
+}
+
+/// OutLayer evaluates secret access against the transaction signer, which
+/// for Verdict is whoever called `ask`. So the key's real guard is here:
+/// `NEAR_PREDECESSOR_ID` is set by the worker from the on-chain request, and
+/// `VERDICT_CONTRACT` comes from the owner's encrypted secrets.
+fn check_caller() -> Result<(), String> {
+    let expected = std::env::var("VERDICT_CONTRACT")
+        .map_err(|_| "VERDICT_CONTRACT is not set in the OutLayer secrets".to_owned())?;
+    let caller = std::env::var("NEAR_PREDECESSOR_ID").unwrap_or_default();
+    if caller != expected {
+        return Err(format!("called by {caller:?}, not by {expected}"));
+    }
+    Ok(())
 }
 
 /// The signature is recorded shortly after the completion returns, so a
