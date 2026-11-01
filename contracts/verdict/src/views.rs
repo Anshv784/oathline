@@ -6,7 +6,7 @@ use near_sdk::json_types::U64;
 use near_sdk::{env, near, AccountId};
 use tee_verifier_interface::Collateral;
 
-use crate::registry::{RegisteredModel, StoredEvent, StoredImage, StoredPolicy};
+use crate::registry::{RegisteredModel, StoredDeployment, StoredEvent, StoredImage, StoredPolicy};
 use crate::requests::{Request, Status};
 use crate::{Runner, Secrets};
 
@@ -48,30 +48,42 @@ impl ImageView {
 
 #[near(serializers = [json])]
 #[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DeploymentView {
+    pub image: ImageView,
+    pub compose_hash: String,
+}
+
+/// The deployments a model may be served from. See
+/// `verdict_core::attestation::Deployment`.
+#[near(serializers = [json])]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct PolicyView {
-    pub images: Vec<ImageView>,
-    pub compose_hashes: Vec<String>,
+    pub deployments: Vec<DeploymentView>,
 }
 
 impl PolicyView {
     pub(crate) fn from_stored(policy: &StoredPolicy) -> Self {
         Self {
-            images: policy.images.iter().map(ImageView::from_stored).collect(),
-            compose_hashes: policy.compose_hashes.iter().map(hex::encode).collect(),
+            deployments: policy
+                .deployments
+                .iter()
+                .map(|deployment| DeploymentView {
+                    image: ImageView::from_stored(&deployment.image),
+                    compose_hash: hex::encode(deployment.compose_hash),
+                })
+                .collect(),
         }
     }
 
     pub(crate) fn into_stored(self) -> StoredPolicy {
         StoredPolicy {
-            images: self
-                .images
+            deployments: self
+                .deployments
                 .into_iter()
-                .map(ImageView::into_stored)
-                .collect(),
-            compose_hashes: self
-                .compose_hashes
-                .iter()
-                .map(|hash| hex_array(hash, "compose_hash"))
+                .map(|deployment| StoredDeployment {
+                    compose_hash: hex_array(&deployment.compose_hash, "compose_hash"),
+                    image: deployment.image.into_stored(),
+                })
                 .collect(),
         }
     }

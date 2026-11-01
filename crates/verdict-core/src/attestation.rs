@@ -57,14 +57,23 @@ pub struct ImageMeasurements {
     pub rt_mr2: Measurement,
 }
 
+/// One way a model is allowed to be served: a VM image together with the
+/// SHA-256 of the app configuration (the exact container set) it runs.
+///
+/// NEAR AI serves a model from several instances that share one signing key
+/// but can differ in OS image and configuration, so a policy lists every
+/// allowed pair. Pairs are matched whole: an allowed image cannot be
+/// combined with another deployment's configuration.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Deployment {
+    pub image: ImageMeasurements,
+    pub compose_hash: [u8; 32],
+}
+
 /// What a model must look like to be accepted.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct ModelPolicy {
-    /// Allowed VM images. The quote must match one of them exactly.
-    pub images: Vec<ImageMeasurements>,
-    /// Allowed SHA-256 hashes of the app configuration, i.e. the exact
-    /// container set (and model weights) the VM is allowed to run.
-    pub compose_hashes: Vec<[u8; 32]>,
+    pub deployments: Vec<Deployment>,
 }
 
 /// The parts of a NEAR AI model attestation that come from outside the quote.
@@ -99,9 +108,9 @@ pub enum AttestationError {
     MissingComposeHash,
     /// The `compose-hash` event disagrees with SHA-256(`app_compose`).
     ComposeHashMismatch,
-    /// MRTD/RTMR0-2 match no allowed image.
+    /// MRTD/RTMR0-2 match no allowed deployment.
     ImageNotAllowed,
-    /// The app configuration is not one the policy allows.
+    /// The image is allowed, but not with this app configuration.
     ComposeNotAllowed,
 }
 
@@ -123,7 +132,7 @@ impl fmt::Display for AttestationError {
             }
             Self::ImageNotAllowed => f.write_str("VM image is not allowed by the model policy"),
             Self::ComposeNotAllowed => {
-                f.write_str("app configuration is not allowed by the model policy")
+                f.write_str("app configuration is not allowed with this VM image")
             }
         }
     }
@@ -218,10 +227,14 @@ pub fn verify_model_evidence(
         rt_mr1: report.rt_mr1,
         rt_mr2: report.rt_mr2,
     };
-    if !policy.images.contains(&image) {
+    let mut same_image = policy
+        .deployments
+        .iter()
+        .filter(|allowed| allowed.image == image);
+    if same_image.clone().next().is_none() {
         return Err(AttestationError::ImageNotAllowed);
     }
-    if !policy.compose_hashes.contains(&compose_hash) {
+    if !same_image.any(|allowed| allowed.compose_hash == compose_hash) {
         return Err(AttestationError::ComposeNotAllowed);
     }
 
