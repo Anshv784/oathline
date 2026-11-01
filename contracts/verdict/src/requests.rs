@@ -17,7 +17,7 @@ use crate::crypto::NearCrypto;
 use crate::external::{
     ext_consumer, ext_outlayer, ExecutionSource, ResourceLimits, ResponseFormat, SecretsReference,
 };
-use crate::views::{CheckView, Outcome, RequestView};
+use crate::views::{CheckView, Outcome, RequestView, Settled};
 use crate::{events, Verdict, VerdictExt};
 
 pub const MAX_TEXT_BYTES: usize = 4096;
@@ -27,10 +27,13 @@ pub const MAX_OPTIONS: usize = 8;
 pub const MAX_OPTION_CHARS: usize = 32;
 /// The least OutLayer accepts for one execution.
 const OUTLAYER_MIN_DEPOSIT: NearToken = NearToken::from_millinear(10);
-const ON_INFERENCE_GAS: Gas = Gas::from_tgas(60);
-const CONSUMER_GAS: Gas = Gas::from_tgas(20);
-/// Fixed share for OutLayer; it also receives any gas left unused.
-const OUTLAYER_GAS: Gas = Gas::from_tgas(150);
+const ON_INFERENCE_GAS: Gas = Gas::from_tgas(50);
+const CONSUMER_GAS: Gas = Gas::from_tgas(15);
+/// OutLayer reserves 50 Tgas for its own settlement callback (`MIN_RESPONSE_GAS`)
+/// and needs a little to admit the request; it also gets any unused gas.
+const OUTLAYER_GAS: Gas = Gas::from_tgas(80);
+/// What `ask` itself needs on top of the two shares above.
+const ASK_GAS: Gas = Gas::from_tgas(30);
 /// Signature record, answer, reason and Borsh framing of a settled request.
 const ANSWER_OVERHEAD_BYTES: usize = 1536;
 
@@ -226,8 +229,8 @@ impl Verdict {
             env::prepaid_gas()
                 >= OUTLAYER_GAS
                     .saturating_add(ON_INFERENCE_GAS)
-                    .saturating_add(Gas::from_tgas(40)),
-            "attach 250 Tgas or more"
+                    .saturating_add(ASK_GAS),
+            "attach at least 160 Tgas"
         );
 
         let input = near_sdk::serde_json::json!({ "model": model, "body": body }).to_string();
@@ -262,8 +265,9 @@ impl Verdict {
     }
 
     /// Receives the runner's output from OutLayer and settles the request.
+    /// Its return value is what a contract chaining `.then` on `ask` receives.
     #[private]
-    pub fn on_inference(&mut self, request_id: U64) -> Outcome {
+    pub fn on_inference(&mut self, request_id: U64) -> Settled {
         let id = request_id.0;
         let mut request = self
             .requests
@@ -295,7 +299,10 @@ impl Verdict {
                 .detach();
         }
         self.requests.replace(id as u32, request);
-        outcome
+        Settled {
+            request_id,
+            outcome,
+        }
     }
 
     pub fn get_request(&self, request_id: U64) -> Option<RequestView> {
