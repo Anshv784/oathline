@@ -8,7 +8,6 @@
 //! decision against Verdict's stored proof.
 
 use near_sdk::json_types::U64;
-use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::store::Vector;
 use near_sdk::{
     env, ext_contract, near, require, AccountId, BorshStorageKey, Gas, NearToken, PanicOnDefault,
@@ -24,8 +23,9 @@ const ON_SCREENED_GAS: Gas = Gas::from_tgas(15);
 pub const SCREENING_DEPOSIT: NearToken = NearToken::from_millinear(150);
 
 /// Mirrors Verdict's `Outcome`.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-#[serde(crate = "near_sdk::serde", tag = "status", rename_all = "snake_case")]
+#[near(serializers = [json])]
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[serde(tag = "status", rename_all = "snake_case")]
 pub enum Outcome {
     Pending,
     Answered { answer: String, reason: String },
@@ -33,8 +33,8 @@ pub enum Outcome {
 }
 
 /// Mirrors Verdict's `Settled`: what `ask` resolves to.
-#[derive(Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
-#[serde(crate = "near_sdk::serde")]
+#[near(serializers = [json])]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Settled {
     pub request_id: U64,
     pub outcome: Outcome,

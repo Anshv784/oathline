@@ -17,7 +17,7 @@ use crate::crypto::NearCrypto;
 use crate::external::{
     ext_consumer, ext_outlayer, ExecutionSource, ResourceLimits, ResponseFormat, SecretsReference,
 };
-use crate::views::{CheckView, Outcome, RequestView, Settled};
+use crate::views::{CheckView, Outcome, RequestView, Settled, SignatureView};
 use crate::{events, Verdict, VerdictExt};
 
 pub const MAX_TEXT_BYTES: usize = 4096;
@@ -353,8 +353,9 @@ impl Verdict {
         &self,
         request_id: U64,
         response_base64: String,
-        signature: SignedResponse,
+        signature: SignatureView,
     ) -> CheckView {
+        let signature = SignedResponse::from(signature);
         let Some(request) = self.requests.get(request_id.0 as u32) else {
             return CheckView::rejected("unknown request");
         };

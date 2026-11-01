@@ -688,7 +688,14 @@ fn check_response_explains_why_an_edit_fails() {
     let id = ask(&mut verdict);
     let request_hash = verdict.requests.get(id as u32).unwrap().request_hash;
     let response = completion(r#"{"answer":"REJECT","reason":"Not tooling."}"#);
-    let signature = sign(&key, &request_hash, &response);
+    let signed = sign(&key, &request_hash, &response);
+    let signature = crate::views::SignatureView {
+        text: signed.text,
+        signature: signed.signature,
+        signing_address: signed.signing_address,
+        signing_algo: signed.signing_algo,
+        signature_kind: signed.signature_kind,
+    };
     let encode = |bytes: &[u8]| base64::engine::general_purpose::STANDARD.encode(bytes);
 
     let genuine = verdict.check_response(U64(id), encode(&response), signature.clone());
