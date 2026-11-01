@@ -1,0 +1,18 @@
+[package]
+name = "verdict-core"
+description = "Verification rules for NEAR AI Cloud attestations and response signatures, shared by the Verdict contract and its off-chain tools."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+hex = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+
+[dev-dependencies]
+k256 = { version = "0.13", features = ["ecdsa"] }
+sha3 = "0.10"
+serde_json = { version = "1", features = ["std"] }
