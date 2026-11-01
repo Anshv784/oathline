@@ -254,6 +254,18 @@ pub struct SignatureView {
     pub signature_kind: Option<String>,
 }
 
+impl From<SignatureView> for verdict_core::inference::SignedResponse {
+    fn from(view: SignatureView) -> Self {
+        Self {
+            text: view.text,
+            signature: view.signature,
+            signing_address: view.signing_address,
+            signing_algo: view.signing_algo,
+            signature_kind: view.signature_kind,
+        }
+    }
+}
+
 /// Everything needed to check an answer again without trusting this contract:
 /// rebuild the body from the fields, hash it, hash `response_base64`, and
 /// recover the signer of `signature.text`.
