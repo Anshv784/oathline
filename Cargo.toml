@@ -1,6 +1,11 @@
 [workspace]
 resolver = "2"
-members = ["crates/verdict-core", "contracts/verdict", "tools/registrar"]
+members = [
+    "crates/verdict-core",
+    "contracts/verdict",
+    "examples/charter-dao",
+    "tools/registrar",
+]
 # Built for wasm32-wasip2 on its own; see runner/README.md.
 exclude = ["runner"]
 
