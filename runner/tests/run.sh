@@ -7,7 +7,7 @@ cd "$(dirname "$0")/.."
 
 PORT=${PORT:-8787}
 WORK=$(mktemp -d)
-trap 'kill $SERVER 2>/dev/null; wait $SERVER 2>/dev/null; rm -rf "$WORK"' EXIT
+trap 'kill $SERVER 2>/dev/null; wait $SERVER 2>/dev/null || true; rm -rf "$WORK"' EXIT
 
 VERDICT_NEAR_AI_URL="http://127.0.0.1:$PORT" \
   cargo build -q --release --target wasm32-wasip2 --target-dir "$WORK/target"
