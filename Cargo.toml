@@ -1,6 +1,8 @@
 [workspace]
 resolver = "2"
 members = ["crates/verdict-core", "contracts/verdict"]
+# Built for wasm32-wasip2 on its own; see runner/README.md.
+exclude = ["runner"]
 
 [workspace.package]
 version = "0.1.0"
