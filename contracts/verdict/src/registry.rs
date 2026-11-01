@@ -15,7 +15,8 @@ use near_sdk::json_types::U64;
 use near_sdk::{env, near, require, AccountId, Gas, NearToken, Promise, PromiseError};
 use tee_verifier_interface::{QuoteBytes, TDReport10, VerificationResult, VerifiedReport};
 use verdict_core::attestation::{
-    verify_model_evidence, ImageMeasurements, ModelEvidence, ModelPolicy, Rtmr3Event, TdReport,
+    verify_model_evidence, Deployment, ImageMeasurements, ModelEvidence, ModelPolicy, Rtmr3Event,
+    TdReport,
 };
 
 use crate::external::ext_tee_verifier;
@@ -41,9 +42,15 @@ pub struct StoredImage {
 
 #[near(serializers = [borsh])]
 #[derive(Clone, Debug, PartialEq, Eq)]
+pub struct StoredDeployment {
+    pub image: StoredImage,
+    pub compose_hash: [u8; 32],
+}
+
+#[near(serializers = [borsh])]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct StoredPolicy {
-    pub images: Vec<StoredImage>,
-    pub compose_hashes: Vec<[u8; 32]>,
+    pub deployments: Vec<StoredDeployment>,
 }
 
 #[near(serializers = [borsh])]
@@ -116,8 +123,14 @@ impl From<ImageMeasurements> for StoredImage {
 impl From<&StoredPolicy> for ModelPolicy {
     fn from(policy: &StoredPolicy) -> Self {
         Self {
-            images: policy.images.iter().map(ImageMeasurements::from).collect(),
-            compose_hashes: policy.compose_hashes.clone(),
+            deployments: policy
+                .deployments
+                .iter()
+                .map(|deployment| Deployment {
+                    image: ImageMeasurements::from(&deployment.image),
+                    compose_hash: deployment.compose_hash,
+                })
+                .collect(),
         }
     }
 }
@@ -137,19 +150,15 @@ fn td_report(report: &TDReport10) -> TdReport {
 
 #[near]
 impl Verdict {
-    /// Sets which VM images and app configurations count as `model`.
-    /// Replacing a policy revokes the current registration: the key must be
-    /// proven again under the new rules.
+    /// Sets the deployments (VM image + app configuration) that count as
+    /// `model`. Replacing a policy revokes the current registration: the key
+    /// must be proven again under the new rules.
     pub fn set_model_policy(&mut self, model: String, policy: PolicyView) {
         self.assert_owner();
         let stored = policy.into_stored();
         require!(
-            !stored.images.is_empty(),
-            "a policy needs at least one image"
-        );
-        require!(
-            !stored.compose_hashes.is_empty(),
-            "a policy needs at least one compose hash"
+            !stored.deployments.is_empty(),
+            "a policy needs at least one deployment"
         );
         self.models.remove(&model);
         events::policy_set(&model);

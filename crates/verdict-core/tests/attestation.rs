@@ -170,7 +170,7 @@ fn debug_enclave_is_rejected() {
 fn image_outside_the_policy_is_rejected() {
     let fixture = common::load();
     let mut policy = common::policy_for(&fixture);
-    policy.images[0].rt_mr1[0] ^= 1;
+    policy.deployments[0].image.rt_mr1[0] ^= 1;
 
     let result = verify_model_evidence(
         &fixture.report,
@@ -185,9 +185,31 @@ fn image_outside_the_policy_is_rejected() {
 #[test]
 fn app_configuration_outside_the_policy_is_rejected() {
     let fixture = common::load();
+    let mut policy = common::policy_for(&fixture);
+    policy.deployments[0].compose_hash = [7; 32];
+
+    let result = verify_model_evidence(
+        &fixture.report,
+        &evidence(&fixture),
+        &fixture.nonce,
+        &policy,
+    );
+
+    assert_eq!(result, Err(AttestationError::ComposeNotAllowed));
+}
+
+#[test]
+fn deployments_are_matched_as_pairs() {
+    // The fixture's image is allowed, and so is its configuration, but only
+    // in two different deployments: that combination must not pass.
+    let fixture = common::load();
+    let genuine = common::policy_for(&fixture).deployments.remove(0);
+    let mut other_image = genuine.clone();
+    other_image.image.rt_mr0[0] ^= 1;
+    let mut other_compose = genuine;
+    other_compose.compose_hash = [9; 32];
     let policy = ModelPolicy {
-        compose_hashes: vec![[7; 32]],
-        ..common::policy_for(&fixture)
+        deployments: vec![other_image, other_compose],
     };
 
     let result = verify_model_evidence(
@@ -198,4 +220,23 @@ fn app_configuration_outside_the_policy_is_rejected() {
     );
 
     assert_eq!(result, Err(AttestationError::ComposeNotAllowed));
+}
+
+#[test]
+fn any_listed_deployment_is_accepted() {
+    let fixture = common::load();
+    let genuine = common::policy_for(&fixture).deployments.remove(0);
+    let mut other = genuine.clone();
+    other.image.mr_td[0] ^= 1;
+    let policy = ModelPolicy {
+        deployments: vec![other, genuine],
+    };
+
+    assert!(verify_model_evidence(
+        &fixture.report,
+        &evidence(&fixture),
+        &fixture.nonce,
+        &policy
+    )
+    .is_ok());
 }

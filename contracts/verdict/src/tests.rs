@@ -16,7 +16,7 @@ use tee_verifier_interface::{
 use verdict_core::inference::{sha256, signature_text, SignedResponse};
 
 use crate::registry::{Challenge, PendingRegistration, RegisteredModel, StoredEvent, StoredImage};
-use crate::views::{ImageView, Outcome, PolicyView, RegistrationOutcome};
+use crate::views::{DeploymentView, ImageView, Outcome, PolicyView, RegistrationOutcome};
 use crate::{Runner, Secrets, Status, Verdict};
 
 const MODEL: &str = "Qwen/Qwen3.8-27B";
@@ -94,16 +94,18 @@ fn fixture() -> Fixture {
 
 fn fixture_policy(fixture: &Fixture) -> PolicyView {
     PolicyView {
-        images: vec![ImageView {
-            mr_td: hex::encode(fixture.td.mr_td),
-            rt_mr0: hex::encode(fixture.td.rt_mr0),
-            rt_mr1: hex::encode(fixture.td.rt_mr1),
-            rt_mr2: hex::encode(fixture.td.rt_mr2),
+        deployments: vec![DeploymentView {
+            image: ImageView {
+                mr_td: hex::encode(fixture.td.mr_td),
+                rt_mr0: hex::encode(fixture.td.rt_mr0),
+                rt_mr1: hex::encode(fixture.td.rt_mr1),
+                rt_mr2: hex::encode(fixture.td.rt_mr2),
+            },
+            compose_hash: fixture.model["info"]["compose_hash"]
+                .as_str()
+                .unwrap()
+                .to_owned(),
         }],
-        compose_hashes: vec![fixture.model["info"]["compose_hash"]
-            .as_str()
-            .unwrap()
-            .to_owned()],
     }
 }
 
@@ -269,7 +271,7 @@ fn image_outside_the_policy_is_rejected() {
     let mut verdict = contract();
     let fixture = fixture();
     let mut policy = fixture_policy(&fixture);
-    policy.images[0].mr_td = "00".repeat(48);
+    policy.deployments[0].image.mr_td = "00".repeat(48);
     verdict.set_model_policy(MODEL.into(), policy);
 
     let reason = rejected_reason(

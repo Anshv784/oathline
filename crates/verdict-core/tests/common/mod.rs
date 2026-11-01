@@ -8,7 +8,7 @@
 #![allow(dead_code)]
 
 use serde_json::Value;
-use verdict_core::attestation::{ImageMeasurements, ModelPolicy, Rtmr3Event, TdReport};
+use verdict_core::attestation::{Deployment, ImageMeasurements, ModelPolicy, Rtmr3Event, TdReport};
 use verdict_core::Address;
 
 pub struct Fixture {
@@ -80,17 +80,17 @@ pub fn load() -> Fixture {
     }
 }
 
-/// A policy that allows exactly the fixture's image and app configuration.
+/// A policy that allows exactly the fixture's deployment.
 pub fn policy_for(fixture: &Fixture) -> ModelPolicy {
     ModelPolicy {
-        images: vec![ImageMeasurements {
-            mr_td: fixture.report.mr_td,
-            rt_mr0: fixture.report.rt_mr0,
-            rt_mr1: fixture.report.rt_mr1,
-            rt_mr2: fixture.report.rt_mr2,
+        deployments: vec![Deployment {
+            image: ImageMeasurements {
+                mr_td: fixture.report.mr_td,
+                rt_mr0: fixture.report.rt_mr0,
+                rt_mr1: fixture.report.rt_mr1,
+                rt_mr2: fixture.report.rt_mr2,
+            },
+            compose_hash: verdict_core::inference::sha256(fixture.app_compose.as_bytes()),
         }],
-        compose_hashes: vec![verdict_core::inference::sha256(
-            fixture.app_compose.as_bytes(),
-        )],
     }
 }
