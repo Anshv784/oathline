@@ -192,10 +192,13 @@ function TamperLab({ request, original }: { request: RequestView; original: Uint
   const [contract, setContract] = useState<CheckView | null | "error">(null);
   const [checking, setChecking] = useState(false);
 
+  // The answer sits JSON-escaped inside the response's content string, with
+  // or without a space after the colon depending on the model.
   const flip = () => {
-    const current = request.options.find((option) => draft.includes(`\\"answer\\":\\"${option}\\"`));
+    const field = /(\\"answer\\":\s*\\")([A-Z0-9_]+)(\\")/;
+    const current = draft.match(field)?.[2];
     const next = request.options.find((option) => option !== current);
-    if (current && next) setDraft(draft.replace(`\\"answer\\":\\"${current}\\"`, `\\"answer\\":\\"${next}\\"`));
+    if (current && next) setDraft(draft.replace(field, `$1${next}$3`));
   };
 
   const run = async () => {
