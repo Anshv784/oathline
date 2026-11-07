@@ -5,14 +5,27 @@ import { useLoad } from "../lib/useLoad";
 import { listRequests, type Outcome, type RequestView } from "../lib/verdict";
 
 export function OutcomeTag({ outcome }: { outcome: Outcome }) {
-  if (outcome.status === "answered") return <Tag tone={outcome.answer === "REJECT" ? "fail" : "pass"}>{outcome.answer}</Tag>;
+  if (outcome.status === "answered") {
+    const tone = outcome.answer === "REJECT" ? "fail" : outcome.answer === "INVALID" ? "wait" : "pass";
+    return <Tag tone={tone}>{outcome.answer}</Tag>;
+  }
   if (outcome.status === "failed") return <Tag tone="fail">REFUSED</Tag>;
   return <Tag tone="wait">PENDING</Tag>;
 }
 
-/** The first line of a submission, for the list. */
+/** A market's question, or else the submission's title. */
 export const headline = (request: RequestView) =>
-  request.submission.split("\n").find((line) => line.trim())?.replace(/^Title:\s*/, "") ?? "";
+  request.instructions.match(/^Question: (.+)$/m)?.[1] ??
+  request.submission.split("\n").find((line) => line.trim())?.replace(/^Title:\s*/, "") ??
+  "";
+
+/** Which example contract asked, in plain words. */
+export const source = (request: RequestView) =>
+  request.requester.startsWith("charter-dao.")
+    ? "Grant DAO"
+    : request.requester.startsWith("market.")
+      ? "Prediction market"
+      : request.requester;
 
 const stops = [
   {
@@ -98,19 +111,29 @@ export function Ledger() {
 
       <section aria-labelledby="ledger-heading" className="space-y-4">
         <div>
-          <h2 id="ledger-heading" className="text-[20px] font-semibold tracking-tight">Live example: a grant DAO</h2>
+          <h2 id="ledger-heading" className="text-[20px] font-semibold tracking-tight">Two contracts already use it</h2>
           <p className="mt-1 max-w-prose text-[15px] leading-relaxed text-ink-2">
-            <code className="font-mono text-[13px]">charter-dao</code> is a demo DAO that only funds open-source NEAR tools.
-            Every proposal is screened by Verdict before it can reach a vote. These are real answers on NEAR testnet.
+            Two different example contracts on NEAR testnet call the same Verdict contract. Every answer below is real.
           </p>
         </div>
 
-        {first && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Panel className="p-5">
-            <Label>The DAO's rule</Label>
-            <p className="mt-2 max-w-prose text-[15px] leading-relaxed">{first.instructions}</p>
+            <Label>Grant DAO · charter-dao</Label>
+            <p className="mt-2 text-[15px] leading-relaxed">
+              Funds only open-source NEAR tools. Every proposal is screened against the DAO's rule before it can reach a vote.
+            </p>
           </Panel>
-        )}
+          <Link to="/markets" className="group block rounded-md border border-rule bg-surface p-5 hover:bg-paper">
+            <Label>Prediction market · verdict-market</Label>
+            <p className="mt-2 text-[15px] leading-relaxed">
+              People bet YES or NO. After it closes, Verdict decides from the rules and the posted evidence. No token vote.
+            </p>
+            <span className="mt-2 inline-flex items-center gap-1 text-[13px] text-ink-2 group-hover:text-ink">
+              See the markets <ArrowRight aria-hidden className="size-4" />
+            </span>
+          </Link>
+        </div>
 
         {requests.state === "loading" && (
           <div className="space-y-px overflow-hidden rounded-md border border-rule">
@@ -150,7 +173,7 @@ export function Ledger() {
                       <p className="mt-1 line-clamp-2 max-w-prose text-[14px] leading-relaxed text-ink-2">{request.outcome.reason}</p>
                     )}
                     <p className="mt-1.5 font-mono text-[12px] text-ink-2">
-                      #{request.id} · {formatTime(request.created_at_ms)}
+                      #{request.id} · {source(request)} · {formatTime(request.created_at_ms)}
                     </p>
                   </div>
                   <span className="mt-1 hidden shrink-0 items-center gap-1 text-[13px] text-ink-2 group-hover:text-ink sm:inline-flex">

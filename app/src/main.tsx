@@ -13,6 +13,7 @@ import { Notice } from "./components/ui";
 import { Developers } from "./pages/Developers";
 import { How } from "./pages/How";
 import { Ledger } from "./pages/Ledger";
+import { Markets } from "./pages/Markets";
 import { Models } from "./pages/Models";
 import { VerdictPage } from "./pages/VerdictPage";
 
@@ -26,6 +27,7 @@ createRoot(document.getElementById("root")!).render(
           <Route path="models" element={<Models />} />
           <Route path="how" element={<How />} />
           <Route path="developers" element={<Developers />} />
+          <Route path="markets" element={<Markets />} />
           <Route path="*" element={<Notice title="This page doesn't exist" />} />
         </Route>
       </Routes>
