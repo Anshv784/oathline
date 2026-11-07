@@ -10,6 +10,7 @@ import { createRoot } from "react-dom/client";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { Notice } from "./components/ui";
+import { Developers } from "./pages/Developers";
 import { How } from "./pages/How";
 import { Ledger } from "./pages/Ledger";
 import { Models } from "./pages/Models";
@@ -24,6 +25,7 @@ createRoot(document.getElementById("root")!).render(
           <Route path="v/:id" element={<VerdictPage />} />
           <Route path="models" element={<Models />} />
           <Route path="how" element={<How />} />
+          <Route path="developers" element={<Developers />} />
           <Route path="*" element={<Notice title="This page doesn't exist" />} />
         </Route>
       </Routes>
