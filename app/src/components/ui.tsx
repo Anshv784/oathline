@@ -108,20 +108,20 @@ export function Button({
   variant?: "solid" | "outline";
   disabled?: boolean;
 }) {
+  return (
+    <button type={type} onClick={onClick} disabled={disabled} className={buttonClass(variant)}>
+      {children}
+    </button>
+  );
+}
+
+/** Button styling, for links that look like buttons. */
+export function buttonClass(variant: "solid" | "outline" = "solid"): string {
   const style =
     variant === "solid"
       ? "bg-ink text-paper hover:bg-ink/85"
       : "border border-rule-strong text-ink hover:bg-rule/40";
-  return (
-    <button
-      type={type}
-      onClick={onClick}
-      disabled={disabled}
-      className={`inline-flex h-10 items-center justify-center gap-2 rounded px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${style}`}
-    >
-      {children}
-    </button>
-  );
+  return `inline-flex h-10 items-center justify-center gap-2 rounded px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${style}`;
 }
 
 export function formatTime(ms: string | null): string {
