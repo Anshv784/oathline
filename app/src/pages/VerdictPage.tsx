@@ -135,7 +135,7 @@ function TextBlock({ label, text }: { label: string; text: string }) {
   return (
     <div>
       <Label>{label}</Label>
-      <p className="mt-2 max-w-prose whitespace-pre-wrap text-[15px] leading-relaxed">{text}</p>
+      <p className="mt-2 max-w-prose whitespace-pre-wrap text-[15px] leading-relaxed [overflow-wrap:anywhere]">{text}</p>
     </div>
   );
 }

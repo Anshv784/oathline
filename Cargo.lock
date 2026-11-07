@@ -4249,6 +4249,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "verdict-market"
+version = "0.1.0"
+dependencies = [
+ "near-sdk",
+]
+
+[[package]]
 name = "verdict-registrar"
 version = "0.1.0"
 dependencies = [

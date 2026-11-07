@@ -4,6 +4,7 @@ import { EXPLORER, NETWORK } from "../lib/near";
 
 const nav = [
   { to: "/", label: "Live verdicts", end: true },
+  { to: "/markets", label: "Market example", end: false },
   { to: "/how", label: "How it works", end: false },
   { to: "/models", label: "Trusted model", end: false },
   { to: "/developers", label: "For developers", end: false },
@@ -20,7 +21,7 @@ export function Layout() {
         <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-8 gap-y-2 px-4 py-3 md:px-6">
           <NavLink to="/" className="flex items-baseline gap-2 py-1">
             <span className="text-[17px] font-semibold tracking-tight">Verdict</span>
-            <span className="hidden text-[13px] text-ink-2 sm:inline">AI answers smart contracts can check</span>
+            <span className="hidden text-[13px] text-ink-2 xl:inline">AI answers smart contracts can check</span>
           </NavLink>
           <nav aria-label="Main" className="order-3 -mx-3 flex w-full gap-1 overflow-x-auto sm:order-none sm:w-auto">
             {nav.map((item) => (
