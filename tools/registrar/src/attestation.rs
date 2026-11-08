@@ -1,12 +1,12 @@
 //! A NEAR AI model attestation, and the same checks the contract applies.
 
 use anyhow::{anyhow, bail, Context, Result};
-use serde::Deserialize;
-use serde_json::{json, Value};
-use verdict_core::attestation::{
+use oathline_core::attestation::{
     verify_model_evidence, Deployment, ImageMeasurements, ModelEvidence, ModelPolicy, Rtmr3Event,
     TdReport,
 };
+use serde::Deserialize;
+use serde_json::{json, Value};
 
 pub const NEAR_AI: &str = "https://cloud-api.near.ai";
 
@@ -84,7 +84,7 @@ impl ModelAttestation {
     }
 
     pub fn address(&self) -> Result<[u8; 20]> {
-        verdict_core::inference::decode_address(&self.signing_address)
+        oathline_core::inference::decode_address(&self.signing_address)
             .context("signing_address is not 20 bytes")
     }
 }
@@ -187,7 +187,7 @@ pub fn deployment_of(attestation: &ModelAttestation, checked: &Checked) -> Deplo
             rt_mr1: checked.report.rt_mr1,
             rt_mr2: checked.report.rt_mr2,
         },
-        compose_hash: verdict_core::inference::sha256(attestation.app_compose.as_bytes()),
+        compose_hash: oathline_core::inference::sha256(attestation.app_compose.as_bytes()),
     }
 }
 

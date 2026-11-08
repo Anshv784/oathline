@@ -1,20 +1,20 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/verdict-core",
-    "contracts/verdict",
+    "crates/oathline-core",
+    "contracts/oathline",
     "examples/charter-dao",
-    "examples/verdict-market",
+    "examples/oathline-market",
     "tools/registrar",
 ]
 # Built for wasm32-wasip2 on its own; see runner/README.md.
-exclude = ["runner"]
+exclude = ["runner", "fetcher"]
 
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-repository = "https://github.com/Anshv784/verdict"
+repository = "https://github.com/Anshv784/oathline"
 
 [workspace.dependencies]
 hex = { version = "0.4", default-features = false, features = ["alloc"] }

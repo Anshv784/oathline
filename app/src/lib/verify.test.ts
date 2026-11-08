@@ -1,4 +1,4 @@
-// The fixture is produced by verdict-core (`cargo run -p verdict-core
+// The fixture is produced by oathline-core (`cargo run -p oathline-core
 // --example export_fixture`), so these tests pin the browser verifier to
 // the contract's own byte-level output.
 

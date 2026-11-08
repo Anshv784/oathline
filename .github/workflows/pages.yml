@@ -23,7 +23,7 @@ jobs:
       run:
         working-directory: app
     env:
-      VITE_VERDICT_CONTRACT: verdict.anshv784.testnet
+      VITE_OATHLINE_CONTRACT: verdict.anshv784.testnet
       VITE_MARKET_CONTRACT: market.anshv784.testnet
       VITE_NEAR_NETWORK: testnet
     steps:
@@ -35,8 +35,8 @@ jobs:
           cache-dependency-path: app/package-lock.json
       - run: npm ci
       - run: npm test
-      - run: npx vite build --base /verdict/
-      # Deep links (/verdict/v/0) are served by the SPA.
+      - run: npx vite build --base /oathline/
+      # Deep links (/oathline/v/0) are served by the SPA.
       - run: cp dist/index.html dist/404.html
       - uses: actions/upload-pages-artifact@v3
         with:

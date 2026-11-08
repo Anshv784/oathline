@@ -1,132 +1,129 @@
-import { Label, Panel } from "../components/ui";
+import { Label, roman } from "../components/ui";
 
 type Step = { plain: string; text: string; tech: string };
 
 const admission: Step[] = [
   {
-    plain: "Verdict hands out a one-time code",
-    text: "So the proof that follows must be made fresh, right now, and can't be an old one replayed.",
-    tech: "start_registration(model) → single-use nonce, valid 10 minutes",
+    plain: "Oathline hands out a one-time nonce",
+    text: "So the proof that follows has to be made now, for us, and can't be an old one replayed.",
+    tech: "start_registration(model) → 32-byte nonce, valid 10 minutes",
   },
   {
-    plain: "The AI's sealed machine makes an Intel certificate",
-    text: "It says: I am a genuine Intel sealed machine, running this exact NEAR AI software, and this is my signing key. It includes the one-time code.",
-    tech: "NEAR AI attestation: Intel TDX quote, report_data = signing key ‖ nonce",
+    plain: "The model's enclave answers with an Intel TDX quote",
+    text: "A report signed by the CPU itself: this exact VM image and app build are running, this is the signing key, and here is your nonce.",
+    tech: "report_data = signing key ‖ 12 zero bytes ‖ nonce; MRTD, RTMR0–3, MRCONFIGID",
   },
   {
-    plain: "NEAR checks Intel's signature on chain",
-    text: "A NEAR contract that nobody can change verifies the certificate really comes from Intel and the firmware is up to date.",
-    tech: "tee-verifier.verify_quote (DCAP), TCB status UpToDate",
+    plain: "NEAR checks Intel's signature, on chain",
+    text: "tee-verifier, a NEAR contract with no access keys, verifies the quote's certificate chain back to Intel and that the firmware is patched.",
+    tech: "tee-verifier.verify_quote (DCAP) · TCB UpToDate · ≈176 Tgas",
   },
   {
-    plain: "Verdict checks the details and remembers the key",
-    text: "No debug access, the approved NEAR AI build, our one-time code. Then the AI's key is trusted for 7 days.",
-    tech: "debug bit, MRCONFIGID, RTMR3 replay, compose hash, image policy",
+    plain: "Oathline checks the details, then pins the key",
+    text: "The key is bound to our nonce, debug is off, the boot log replays, and the build is one the owner allowed. The key is then trusted for 14 days.",
+    tech: "report_data binding · TD_ATTRIBUTES.debug = 0 · RTMR3 replay · compose-hash policy",
   },
 ];
 
 const asking: Step[] = [
   {
-    plain: "A contract asks a question",
-    text: "It gives a rule, something to judge, and the allowed answers, like APPROVE or REJECT.",
-    tech: "ask(model, instructions, submission, options)",
+    plain: "A contract asks",
+    text: "It sends a rule, the thing to judge, and the allowed answers, such as APPROVE or REJECT.",
+    tech: "ask(model, instructions, submission, options) — 0.15 NEAR, 170 Tgas",
   },
   {
-    plain: "Verdict writes the exact question",
-    text: "Verdict builds the request itself and stores its fingerprint, so nobody can reword it later.",
-    tech: "request body built on chain, sha256 stored",
+    plain: "Oathline writes the question itself",
+    text: "It builds the exact request bytes and stores their fingerprint, so nobody can reword the question later.",
+    tech: "request body built on chain · sha256 stored · response schema forces an allowed answer",
   },
   {
-    plain: "A sealed worker asks the AI exactly once",
-    text: "An OutLayer worker, itself running in a sealed machine, sends the question to NEAR AI one time and brings back the answer and its signature. It never retries.",
-    tech: "OutLayer TDX worker, runner pinned by WASM hash",
+    plain: "A sealed worker asks NEAR AI exactly once",
+    text: "An OutLayer worker, itself in a TDX enclave and pinned by its WASM hash, sends those bytes once and brings back the answer and signature. It never retries.",
+    tech: "OutLayer request_execution · runner pinned by sha256 · caller checked against the contract",
   },
   {
-    plain: "Verdict checks the signature, then replies",
-    text: "Signed by the trusted key, for this question and this answer, with an allowed answer. Only then does the asking contract get it.",
-    tech: "on_inference: ECDSA over model:sha256(request):sha256(response)",
+    plain: "Oathline checks the oath, then replies",
+    text: "Signed by the pinned key, over this question and this answer, with an allowed answer. Only then does the asking contract receive it.",
+    tech: "ecrecover(EIP-191, model:sha256(request):sha256(response)) == pinned key",
   },
   {
-    plain: "The proof stays on chain",
-    text: "The raw answer and signature are kept, so anyone can check them again later, like this website does.",
-    tech: "get_request returns every byte",
+    plain: "The record stays on chain",
+    text: "The raw answer and signature are stored, so anyone can examine the oath again later, as this site does in your browser.",
+    tech: "get_request returns every byte · check_response re-judges any bytes you give it",
   },
 ];
 
 const glossary = [
-  ["Sealed machine (TEE)", "A computer whose memory is locked by the chip itself. Not even the server owner can see inside or change what runs. Here: Intel TDX."],
-  ["Intel certificate (attestation)", "A report signed by Intel that says what software a sealed machine runs and which key it holds."],
-  ["Signature", "A stamp only the AI's key can make. If one letter of the answer changes, the stamp no longer matches."],
+  ["Sealed machine (TEE)", "A computer whose memory the chip itself locks. Not even the server's owner can look in or change what runs. Here: Intel TDX."],
+  ["Quote (attestation)", "A report signed by Intel's hardware saying exactly what software a sealed machine runs and which key it holds."],
+  ["Oath (signature)", "A stamp only the model's key can make. Change one letter of the answer and the stamp no longer matches."],
   ["Fingerprint (hash)", "A short code computed from data. Any change to the data gives a completely different code."],
-  ["NEAR AI", "NEAR's AI service. It runs models in sealed machines and signs every answer."],
-  ["OutLayer", "NEAR's service that runs small programs in sealed machines when a contract asks, then reports back."],
-  ["Testnet", "NEAR's practice network. Same software, tokens with no value."],
+  ["OutLayer", "NEAR's service that runs small programs in sealed machines when a contract asks, then reports back to the contract."],
 ];
 
 export function How() {
   return (
-    <div className="space-y-12">
+    <div className="space-y-20">
       <section className="max-w-3xl">
-        <h1 className="text-[28px] font-semibold tracking-tight md:text-[34px]">How it works</h1>
-        <p className="mt-3 max-w-prose text-[16px] leading-relaxed text-ink-2">
-          NEAR AI runs models inside sealed machines and signs every answer. Until now, only websites and scripts checked those
-          signatures. Verdict does the checking inside a NEAR smart contract, so other contracts can safely act on an AI's answer.
-          NEAR's own example of an AI-run DAO still lists this check as "TODO".
+        <Label>How it works</Label>
+        <h1 className="serif mt-3 text-[40px] leading-[1.05] tracking-tight md:text-[52px]">
+          An oath has two parts: <span className="italic text-seal">who swears</span>, and <span className="italic text-seal">what was sworn</span>.
+        </h1>
+        <p className="mt-5 max-w-prose text-[16.5px] leading-relaxed text-ink-2">
+          NEAR AI runs models in Intel TDX enclaves and signs every answer. Until now only scripts checked those signatures,
+          off chain. Oathline moves both checks into a NEAR contract, so another contract can act on the answer without
+          trusting anyone in between.
         </p>
       </section>
 
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
-        <Steps title="Part 1: Proving which AI it is" when="Once a week" steps={admission} />
-        <Steps title="Part 2: Asking a question" when="Every time" steps={asking} />
-      </div>
+      <Part title="Who swears" when="Once, then every 14 days" steps={admission} />
+      <Part title="What was sworn" when="Every question" steps={asking} />
 
-      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
-        <Panel className="p-5">
-          <Label>What you still have to trust</Label>
-          <ul className="mt-3 list-disc space-y-2 pl-5 text-[14px] leading-relaxed">
-            <li>Intel's sealed machines, and the owner's choice of which NEAR AI builds to allow.</li>
-            <li>OutLayer to run the worker once. The worker never retries, so it can't keep asking until it likes the answer.</li>
-            <li>The AI's judgment. Verdict proves which AI answered and what it said, not that the answer is wise.</li>
-            <li>The GPU's own certificate (NVIDIA) is not checked on chain yet. It is too costly for a NEAR contract today.</li>
+      <section className="grid gap-10 md:grid-cols-2">
+        <div>
+          <h2 className="serif text-[26px]">What you still trust</h2>
+          <ul className="mt-4 space-y-3 text-[15px] leading-relaxed">
+            <li className="border-l-2 border-rule-strong pl-4">Intel's sealed machines, and the owner's choice of which NEAR AI builds to allow.</li>
+            <li className="border-l-2 border-rule-strong pl-4">OutLayer to run the pinned worker once. It never retries, so it cannot keep asking until it likes the answer.</li>
+            <li className="border-l-2 border-rule-strong pl-4">The model's judgment. Oathline proves which model answered and what it said, not that the answer is wise.</li>
+            <li className="border-l-2 border-rule-strong pl-4">The GPU's own NVIDIA evidence is checked off chain by the registrar, not on chain: a NEAR contract has no cheap P-384 check today.</li>
           </ul>
-        </Panel>
-        <Panel className="p-5">
-          <Label>Words used on this site</Label>
-          <dl className="mt-3 space-y-3">
+        </div>
+        <div>
+          <h2 className="serif text-[26px]">Words used here</h2>
+          <dl className="mt-4 space-y-4">
             {glossary.map(([term, text]) => (
               <div key={term}>
-                <dt className="text-[14px] font-medium">{term}</dt>
-                <dd className="text-[14px] leading-relaxed text-ink-2">{text}</dd>
+                <dt className="serif text-[17px]">{term}</dt>
+                <dd className="text-[14.5px] leading-relaxed text-ink-2">{text}</dd>
               </div>
             ))}
           </dl>
-        </Panel>
-      </div>
+        </div>
+      </section>
     </div>
   );
 }
 
-function Steps({ title, when, steps }: { title: string; when: string; steps: Step[] }) {
+function Part({ title, when, steps }: { title: string; when: string; steps: Step[] }) {
   return (
-    <Panel>
-      <div className="flex items-baseline justify-between gap-3 border-b border-rule px-5 py-4">
-        <h2 className="font-semibold">{title}</h2>
-        <span className="text-[13px] text-ink-2">{when}</span>
+    <section>
+      <div className="flex flex-wrap items-baseline justify-between gap-2 border-b-2 border-ink pb-2">
+        <h2 className="serif text-[30px]">{title}</h2>
+        <span className="font-mono text-[12.5px] text-ink-3">{when}</span>
       </div>
-      <ol className="divide-y divide-rule">
-        {steps.map((step, index) => (
-          <li key={step.plain} className="flex gap-4 px-5 py-4">
-            <span className="inline-flex size-6 shrink-0 items-center justify-center rounded-full bg-ink font-mono text-[12px] text-paper">
-              {index + 1}
-            </span>
-            <div className="min-w-0">
-              <p className="font-medium leading-snug">{step.plain}</p>
-              <p className="mt-1 text-[14px] leading-relaxed text-ink-2">{step.text}</p>
-              <p className="mt-1.5 font-mono text-[12px] text-ink-2/80">{step.tech}</p>
+      <ol>
+        {steps.map((step, i) => (
+          <li key={step.plain} className="grid gap-x-8 gap-y-2 border-b border-rule py-5 md:grid-cols-[3rem_1fr_1fr]">
+            <span className="serif text-[18px] italic text-seal">{roman(i + 1)}.</span>
+            <div>
+              <h3 className="text-[16.5px] font-medium">{step.plain}</h3>
+              <p className="mt-1 text-[14.5px] leading-relaxed text-ink-2">{step.text}</p>
             </div>
+            <p className="font-mono text-[12.5px] leading-relaxed text-ink-2 md:pt-0.5">{step.tech}</p>
           </li>
         ))}
       </ol>
-    </Panel>
+    </section>
   );
 }

@@ -1,4 +1,4 @@
-//! `verdict-registrar`: prepares the arguments for admitting a model.
+//! `oathline-registrar`: prepares the arguments for admitting a model.
 //!
 //! It never signs or sends a transaction. It writes a JSON file and prints
 //! the `near` command to submit it, after running every check the contract
@@ -11,9 +11,9 @@ use std::path::PathBuf;
 
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
+use oathline_core::attestation::ModelPolicy;
 use rand::RngCore;
 use serde_json::json;
-use verdict_core::attestation::ModelPolicy;
 
 #[derive(Parser)]
 #[command(version, about)]
@@ -55,7 +55,7 @@ enum Command {
 #[tokio::main]
 async fn main() -> Result<()> {
     let http = reqwest::Client::builder()
-        .user_agent("verdict-registrar")
+        .user_agent("oathline-registrar")
         .build()?;
     match Cli::parse().command {
         Command::Policy {
@@ -120,7 +120,7 @@ async fn policy(http: &reqwest::Client, model: &str, samples: u32, out: PathBuf)
         out.display()
     );
     eprintln!(
-        "  near contract call-function as-transaction <verdict-account> set_model_policy file-args {} \
+        "  near contract call-function as-transaction <oathline-account> set_model_policy file-args {} \
          prepaid-gas '30 Tgas' attached-deposit '0 NEAR' sign-as <owner> network-config testnet",
         out.display()
     );

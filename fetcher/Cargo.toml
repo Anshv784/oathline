@@ -1,0 +1,24 @@
+[package]
+name = "oathline-fetcher"
+description = "OutLayer program that fetches a market's fixed source URL inside a TDX worker and returns the excerpt around an anchor, with the page's SHA-256."
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+
+[[bin]]
+name = "oathline-fetcher"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+wasi-http-client = "0.2.1"
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+codegen-units = 1
+panic = "abort"

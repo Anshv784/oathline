@@ -1,4 +1,4 @@
-// The verdict-market example's views, typed to match examples/verdict-market.
+// The oathline-market example's views, typed to match examples/oathline-market.
 
 import { view } from "./near";
 
@@ -32,4 +32,21 @@ export async function listMarkets(signal?: AbortSignal): Promise<Market[]> {
 export function near(yocto: string): string {
   const value = Number(BigInt(yocto) / 10n ** 18n) / 1e6;
   return `${value.toLocaleString(undefined, { maximumFractionDigits: 4 })} NEAR`;
+}
+
+export interface Source {
+  url: string;
+  anchor: string;
+}
+
+export interface Fetched {
+  sha256: string;
+  bytes: number;
+  fetched_at_ms: string;
+}
+
+/** A market's fixed source, and what the TDX fetcher last saw there. */
+export async function getSource(id: string, signal?: AbortSignal): Promise<[Source, Fetched | null] | null> {
+  if (!MARKET) return null;
+  return view<[Source, Fetched | null] | null>(MARKET, "get_source", { market_id: id }, signal);
 }

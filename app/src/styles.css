@@ -1,50 +1,62 @@
 @import "tailwindcss";
 
-/* Paper and ink. One neutral family (warm), and colour only where it means
-   something: pass, fail, pending. Values checked for WCAG AA on --paper. */
+/* Oathline: a notarial record. Vellum and ink, one brand colour (the
+   oxblood of a wax seal), and colour elsewhere only where it means
+   something: upheld, refused, pending. Contrast checked for WCAG AA. */
 :root {
-  --paper: #f6f4ee;
-  --surface: #fffefa;
-  --ink: #17160f;
-  --ink-2: #4c4a42; /* 8.0:1 on paper */
-  --rule: #dcd8cc;
-  --rule-strong: #bdb8a8;
-  --pass: #17663f; /* 6.6:1 */
-  --pass-wash: #e3efe6;
-  --fail: #a5281c; /* 6.2:1 */
-  --fail-wash: #f6e4e0;
-  --wait: #7a5a08; /* 5.6:1 */
-  --wait-wash: #f3ead2;
-  --focus: #2457c5;
+  --paper: #f3eee3; /* vellum */
+  --sheet: #fbf8f1; /* a record lying on it */
+  --ink: #1b1713;
+  --ink-2: #574e44; /* 7.6:1 on paper */
+  --ink-3: #857a6c; /* hints only, 4.0:1, never body text */
+  --rule: #ddd3c1;
+  --rule-strong: #c2b59f;
+  --seal: #7a1f1a; /* oxblood: the brand, and nothing else */
+  --seal-wash: #f2e3dd;
+  --pass: #1f5c3d; /* 7.4:1 */
+  --pass-wash: #e1ebe2;
+  --fail: #9a3412; /* 6.4:1 */
+  --fail-wash: #f6e5d9;
+  --wait: #765708;
+  --wait-wash: #f2e8cf;
+  --focus: #2d4fb3;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #121210;
-    --surface: #1a1a17;
-    --ink: #edeae2;
-    --ink-2: #aeaa9d;
-    --rule: #2e2d28;
-    --rule-strong: #47453d;
-    --pass: #5fcf95;
-    --pass-wash: #17271e;
-    --fail: #f4877a;
-    --fail-wash: #2c1a17;
-    --wait: #e2bd5c;
-    --wait-wash: #2a2415;
-    --focus: #8fb0ff;
+    --paper: #15120f;
+    --sheet: #1c1915;
+    --ink: #ece4d4;
+    --ink-2: #b1a692;
+    --ink-3: #807562;
+    --rule: #2e2822;
+    --rule-strong: #463e34;
+    --seal: #d98b78;
+    --seal-wash: #2d1b17;
+    --pass: #7fcfa0;
+    --pass-wash: #17251c;
+    --fail: #f0a07a;
+    --fail-wash: #2c1c14;
+    --wait: #e2c06a;
+    --wait-wash: #29220f;
+    --focus: #93acff;
   }
 }
 
 @theme {
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-serif: "Fraunces", ui-serif, Georgia, serif;
   --color-paper: var(--paper);
-  --color-surface: var(--surface);
+  --color-sheet: var(--sheet);
+  --color-surface: var(--sheet);
   --color-ink: var(--ink);
   --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
   --color-rule: var(--rule);
   --color-rule-strong: var(--rule-strong);
+  --color-seal: var(--seal);
+  --color-seal-wash: var(--seal-wash);
   --color-pass: var(--pass);
   --color-pass-wash: var(--pass-wash);
   --color-fail: var(--fail);
@@ -58,16 +70,29 @@ html {
   background: var(--paper);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
-  font-feature-settings: "ss02";
 }
 
 body {
   font-family: var(--font-sans);
+  /* A faint laid-paper texture: horizontal chain lines, nothing decorative. */
+  background-image: repeating-linear-gradient(0deg, transparent 0 27px, color-mix(in srgb, var(--rule) 35%, transparent) 27px 28px);
+  background-attachment: fixed;
+}
+
+.serif {
+  font-family: var(--font-serif);
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30, "WONK" 0;
+}
+
+.smallcaps {
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
 }
 
 ::selection {
-  background: var(--ink);
-  color: var(--paper);
+  background: var(--seal);
+  color: var(--sheet);
 }
 
 :focus-visible {
@@ -75,15 +100,41 @@ body {
   outline-offset: 2px;
 }
 
+/* The mark draws itself once, like a signature; the seal presses in. */
 @media (prefers-reduced-motion: no-preference) {
+  .ink-draw path {
+    stroke-dasharray: 520;
+    stroke-dashoffset: 520;
+    animation: ink-draw 1.8s cubic-bezier(0.65, 0, 0.35, 1) 0.1s forwards;
+  }
+  .seal-press {
+    animation: seal-press 520ms cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+  }
   .fade-in {
-    animation: fade-in 180ms ease-out both;
+    animation: fade-in 260ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+}
+
+@keyframes ink-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes seal-press {
+  from {
+    opacity: 0;
+    transform: scale(1.25) rotate(-14deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(-8deg);
   }
 }
 
 @keyframes fade-in {
   from {
     opacity: 0;
-    transform: translateY(2px);
+    transform: translateY(4px);
   }
 }

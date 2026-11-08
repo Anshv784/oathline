@@ -3,6 +3,10 @@ import "@fontsource/ibm-plex-sans/500.css";
 import "@fontsource/ibm-plex-sans/600.css";
 import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-mono/500.css";
+import "@fontsource/fraunces/400.css";
+import "@fontsource/fraunces/500.css";
+import "@fontsource/fraunces/600.css";
+import "@fontsource/fraunces/400-italic.css";
 import "./styles.css";
 
 import { StrictMode } from "react";
@@ -15,7 +19,7 @@ import { How } from "./pages/How";
 import { Ledger } from "./pages/Ledger";
 import { Markets } from "./pages/Markets";
 import { Models } from "./pages/Models";
-import { VerdictPage } from "./pages/VerdictPage";
+import { OathlinePage } from "./pages/OathlinePage";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
@@ -23,7 +27,7 @@ createRoot(document.getElementById("root")!).render(
       <Routes>
         <Route element={<Layout />}>
           <Route index element={<Ledger />} />
-          <Route path="v/:id" element={<VerdictPage />} />
+          <Route path="v/:id" element={<OathlinePage />} />
           <Route path="models" element={<Models />} />
           <Route path="how" element={<How />} />
           <Route path="developers" element={<Developers />} />

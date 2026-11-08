@@ -1,6 +1,6 @@
 // An independent re-implementation of the contract's acceptance rule, run in
 // the browser. It shares no code with the contract: if both agree, the
-// verdict holds without trusting either one.
+// oathline holds without trusting either one.
 
 import { secp256k1 } from "@noble/curves/secp256k1.js";
 import { keccak_256 } from "@noble/hashes/sha3.js";
@@ -49,6 +49,8 @@ export function requestBody(q: Question): string {
     response_format: {
       type: "json_schema",
       json_schema: {
+        // Wire-format constant: every request already on chain was hashed with
+        // this schema name (the project's first name). Changing it breaks them.
         name: "verdict",
         strict: true,
         schema: {

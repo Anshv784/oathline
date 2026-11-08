@@ -24,7 +24,7 @@ pub async fn view(
         .post(rpc_url(network))
         .json(&json!({
             "jsonrpc": "2.0",
-            "id": "verdict-registrar",
+            "id": "oathline-registrar",
             "method": "query",
             "params": {
                 "request_type": "call_function",

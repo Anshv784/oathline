@@ -1,10 +1,10 @@
 # Threat model
 
-What a stored verdict proves, what it relies on, and what it does not cover.
+What a stored oathline proves, what it relies on, and what it does not cover.
 
 ## What an accepted answer proves
 
-For request `#n`, Verdict stored `answer` only if all of these held when the
+For request `#n`, Oathline stored `answer` only if all of these held when the
 answer arrived:
 
 1. The key that signed it was registered for `model` and not revoked. It was
@@ -40,20 +40,20 @@ are stored.
 | Old or recorded attestation | Registration requires a nonce from this contract, used once, within ten minutes. |
 | A NEAR AI VM in debug mode, or running other containers or weights | Debug bit, MRCONFIGID/RTMR3 and the pinned deployment list. |
 | Ask the model many times and keep the preferred answer | The completion is requested once, inside the OutLayer worker, by a runner pinned by its WASM hash. It never retries the completion. |
-| Third parties spending the operator's NEAR AI key | The runner refuses any caller but the configured Verdict contract (`NEAR_PREDECESSOR_ID`). |
+| Third parties spending the operator's NEAR AI key | The runner refuses any caller but the configured Oathline contract (`NEAR_PREDECESSOR_ID`). |
 | Prompt injection inside the submission | Partly mitigated: the submission is fenced as data and the answer must match a fixed option. The model can still be persuaded; see below. |
 
 ## What is trusted
 
 - **Intel TDX** and Intel's collateral, as checked by dcap-qvl in `tee-verifier`.
 - **The owner's policy.** The owner chooses which NEAR AI deployments count
-  as a model. `verdict-registrar policy` derives them from live, verified
+  as a model. `oathline-registrar policy` derives them from live, verified
   attestations, but reviewing what the pinned `app_compose` runs (images,
   weights) against NEAR AI's published builds is a human step. The owner can
   also revoke a model and replace the runner hash.
 - **OutLayer** to run the pinned runner once per request, keep the API key
   secret, and deliver its output. OutLayer workers are themselves TDX
-  attested, but Verdict does not check worker attestations on chain.
+  attested, but Oathline does not check worker attestations on chain.
 - **NEAR AI's signing design**: that `provider_tee` keys never leave model
   enclaves. Instances of one model share a key.
 
@@ -62,7 +62,7 @@ are stored.
 - **NVIDIA GPU evidence.** Model reports include an NVIDIA payload, verified
   through NVIDIA's NRAS service with an ES384 token. NEAR has no cheap P-384
   verification, so this is not checked on chain.
-- **Correctness of the answer.** Verdict proves which model answered and
+- **Correctness of the answer.** Oathline proves which model answered and
   what it said, not that it is right. Use more than one model and treat
   disagreement as "no decision" when stakes are high.
 - **Liveness.** If NEAR AI or OutLayer is down, a request fails and is

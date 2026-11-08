@@ -2,10 +2,10 @@
 //!
 //! This is NEAR's `verifiable-ai-dao` example with the missing piece in
 //! place: the decision is not taken from whoever relays it. Each proposal is
-//! sent to Verdict, which accepts the model's answer only after checking, on
+//! sent to Oathline, which accepts the model's answer only after checking, on
 //! chain, that the registered NEAR AI enclave signed exactly this request and
 //! response. The DAO then records `request_id`, so anyone can re-check the
-//! decision against Verdict's stored proof.
+//! decision against Oathline's stored proof.
 
 use near_sdk::json_types::U64;
 use near_sdk::store::Vector;
@@ -17,12 +17,12 @@ use near_sdk::{
 const MAX_TITLE_CHARS: usize = 120;
 const MAX_DESCRIPTION_BYTES: usize = 3000;
 /// Enough for `ask` (160 Tgas) and its callback chain.
-const VERDICT_GAS: Gas = Gas::from_tgas(170);
+const OATHLINE_GAS: Gas = Gas::from_tgas(170);
 const ON_SCREENED_GAS: Gas = Gas::from_tgas(15);
-/// Covers Verdict's storage for the request and answer, plus OutLayer.
+/// Covers Oathline's storage for the request and answer, plus OutLayer.
 pub const SCREENING_DEPOSIT: NearToken = NearToken::from_millinear(150);
 
-/// Mirrors Verdict's `Outcome`.
+/// Mirrors Oathline's `Outcome`.
 #[near(serializers = [json])]
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[serde(tag = "status", rename_all = "snake_case")]
@@ -32,7 +32,7 @@ pub enum Outcome {
     Failed { reason: String },
 }
 
-/// Mirrors Verdict's `Settled`: what `ask` resolves to.
+/// Mirrors Oathline's `Settled`: what `ask` resolves to.
 #[near(serializers = [json])]
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Settled {
@@ -41,8 +41,8 @@ pub struct Settled {
 }
 
 #[allow(dead_code)]
-#[ext_contract(ext_verdict)]
-trait Verdict {
+#[ext_contract(ext_oathline)]
+trait Oathline {
     fn ask(
         &mut self,
         model: String,
@@ -81,7 +81,7 @@ pub struct Proposal {
     pub title: String,
     pub description: String,
     pub submitted_at_ms: U64,
-    /// Verdict's request id, once the screening settles.
+    /// Oathline's request id, once the screening settles.
     pub verdict_request: Option<U64>,
     pub screening: Screening,
 }
@@ -95,7 +95,7 @@ enum StorageKey {
 #[near(contract_state)]
 #[derive(PanicOnDefault)]
 pub struct CharterDao {
-    verdict: AccountId,
+    oathline: AccountId,
     model: String,
     charter: String,
     proposals: Vector<Proposal>,
@@ -104,10 +104,10 @@ pub struct CharterDao {
 #[near]
 impl CharterDao {
     #[init]
-    pub fn new(verdict: AccountId, model: String, charter: String) -> Self {
+    pub fn new(oathline: AccountId, model: String, charter: String) -> Self {
         require!(!charter.trim().is_empty(), "the charter is empty");
         Self {
-            verdict,
+            oathline,
             model,
             charter,
             proposals: Vector::new(StorageKey::Proposals),
@@ -143,9 +143,9 @@ impl CharterDao {
             screening: Screening::InReview,
         });
 
-        ext_verdict::ext(self.verdict.clone())
+        ext_oathline::ext(self.oathline.clone())
             .with_attached_deposit(env::attached_deposit())
-            .with_static_gas(VERDICT_GAS)
+            .with_static_gas(OATHLINE_GAS)
             .with_unused_gas_weight(1)
             .ask(
                 self.model.clone(),
@@ -190,12 +190,12 @@ impl CharterDao {
                 }
             }
             Err(_) => {
-                // Verdict refused the call, so the deposit came back here.
+                // Oathline refused the call, so the deposit came back here.
                 Promise::new(proposal.proposer.clone())
                     .transfer(deposit)
                     .detach();
                 Screening::NotScreened {
-                    reason: "Verdict did not accept the request".to_owned(),
+                    reason: "Oathline did not accept the request".to_owned(),
                 }
             }
         };
@@ -222,8 +222,8 @@ impl CharterDao {
         self.charter.clone()
     }
 
-    pub fn verdict(&self) -> (AccountId, String) {
-        (self.verdict.clone(), self.model.clone())
+    pub fn oathline(&self) -> (AccountId, String) {
+        (self.oathline.clone(), self.model.clone())
     }
 }
 
@@ -337,7 +337,7 @@ mod tests {
         assert_eq!(
             proposal.screening,
             Screening::NotScreened {
-                reason: "Verdict did not accept the request".into()
+                reason: "Oathline did not accept the request".into()
             }
         );
     }
