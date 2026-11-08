@@ -9,9 +9,9 @@ PORT=${PORT:-8787}
 WORK=$(mktemp -d)
 trap 'kill $SERVER 2>/dev/null; wait $SERVER 2>/dev/null || true; rm -rf "$WORK"' EXIT
 
-VERDICT_NEAR_AI_URL="http://127.0.0.1:$PORT" \
+OATHLINE_NEAR_AI_URL="http://127.0.0.1:$PORT" \
   cargo build -q --release --target wasm32-wasip2 --target-dir "$WORK/target"
-WASM="$WORK/target/wasm32-wasip2/release/verdict-runner.wasm"
+WASM="$WORK/target/wasm32-wasip2/release/oathline-runner.wasm"
 
 python3 tests/mock_near_ai.py "$PORT" "$WORK/requests.log" &
 SERVER=$!
@@ -22,7 +22,7 @@ INPUT=$(python3 -c 'import json,sys; print(json.dumps({"model":"Qwen/Qwen3.8-27B
 
 run() {
   printf '%s' "$INPUT" | wasmtime run -S http --env NEARAI_API_KEY=test-key \
-    --env VERDICT_CONTRACT=verdict.testnet --env NEAR_PREDECESSOR_ID="$1" "$WASM"
+    --env OATHLINE_CONTRACT=verdict.testnet --env NEAR_PREDECESSOR_ID="$1" "$WASM"
 }
 
 # Any caller but the configured contract is refused before NEAR AI is called.
@@ -52,4 +52,20 @@ assert "error" not in output, output
 raw = base64.b64decode(output["response"])
 assert output["signature"]["text"].endswith(hashlib.sha256(raw).hexdigest())
 print("runner: foreign caller refused; one completion, exact body, signature retried once, raw response returned")
+PY
+
+# A body over WASI's 4096-byte write limit is forwarded whole (it used to trap).
+: > "$WORK/requests.log"
+BIG=$(python3 -c 'import json; print(json.dumps({"model":"Qwen/Qwen3.8-27B","messages":[{"role":"user","content":"évidence… " * 900}]}))')
+INPUT=$(python3 -c 'import json,sys; print(json.dumps({"model":"Qwen/Qwen3.8-27B","body":sys.argv[1]}))' "$BIG")
+OUTPUT=$(run verdict.testnet)
+python3 - "$WORK/requests.log" "$BIG" "$OUTPUT" <<'PY'
+import hashlib, json, sys
+log = [json.loads(line) for line in open(sys.argv[1])]
+body, output = sys.argv[2].encode(), json.loads(sys.argv[3])
+posts = [e for e in log if e["path"] == "/v1/chat/completions"]
+assert len(body) > 8192, len(body)
+assert len(posts) == 1 and posts[0]["sha256"] == hashlib.sha256(body).hexdigest(), "large body not forwarded byte for byte"
+assert "error" not in output, output
+print(f"runner: {len(body)}-byte body forwarded intact")
 PY

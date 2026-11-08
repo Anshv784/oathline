@@ -1,4 +1,4 @@
-//! Runs inside an OutLayer TDX worker on behalf of the Verdict contract.
+//! Runs inside an OutLayer TDX worker on behalf of the Oathline contract.
 //!
 //! stdin:  `{"model": "...", "body": "..."}` where `body` is the exact
 //!         request the contract wrote and hashed.
@@ -11,7 +11,7 @@
 //! prefer; only fetching the signature for that one completion is retried.
 //! The runner does no checking of the answer: the contract verifies that.
 //! It only refuses to spend the NEAR AI key for any caller other than the
-//! Verdict contract named in its secrets.
+//! Oathline contract named in its secrets.
 
 use std::io::{self, Read, Write};
 use std::thread::sleep;
@@ -24,7 +24,7 @@ use wasi_http_client::Client;
 
 /// Overridable at build time for local tests only. A different URL produces
 /// a different WASM hash, which the contract would not run.
-const NEAR_AI: &str = match option_env!("VERDICT_NEAR_AI_URL") {
+const NEAR_AI: &str = match option_env!("OATHLINE_NEAR_AI_URL") {
     Some(url) => url,
     None => "https://cloud-api.near.ai",
 };
@@ -92,12 +92,12 @@ fn run() -> Result<Value, String> {
 }
 
 /// OutLayer evaluates secret access against the transaction signer, which
-/// for Verdict is whoever called `ask`. So the key's real guard is here:
+/// for Oathline is whoever called `ask`. So the key's real guard is here:
 /// `NEAR_PREDECESSOR_ID` is set by the worker from the on-chain request, and
-/// `VERDICT_CONTRACT` comes from the owner's encrypted secrets.
+/// `OATHLINE_CONTRACT` comes from the owner's encrypted secrets.
 fn check_caller() -> Result<(), String> {
-    let expected = std::env::var("VERDICT_CONTRACT")
-        .map_err(|_| "VERDICT_CONTRACT is not set in the OutLayer secrets".to_owned())?;
+    let expected = std::env::var("OATHLINE_CONTRACT")
+        .map_err(|_| "OATHLINE_CONTRACT is not set in the OutLayer secrets".to_owned())?;
     let caller = std::env::var("NEAR_PREDECESSOR_ID").unwrap_or_default();
     if caller != expected {
         return Err(format!("called by {caller:?}, not by {expected}"));

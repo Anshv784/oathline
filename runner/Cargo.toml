@@ -1,13 +1,13 @@
 [package]
-name = "verdict-runner"
-description = "OutLayer program that sends Verdict's request body to NEAR AI exactly once and returns the raw response with the model's signature."
+name = "oathline-runner"
+description = "OutLayer program that sends Oathline's request body to NEAR AI exactly once and returns the raw response with the model's signature."
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
 publish = false
 
 [[bin]]
-name = "verdict-runner"
+name = "oathline-runner"
 path = "src/main.rs"
 
 [dependencies]
@@ -22,3 +22,9 @@ lto = true
 strip = true
 codegen-units = 1
 panic = "abort"
+
+# Upstream wasi-http-client 0.2.1 writes a request body in one
+# blocking_write_and_flush call, which WASI limits to 4096 bytes. The vendored
+# copy chunks the write; see vendor/wasi-http-client/src/request.rs.
+[patch.crates-io]
+wasi-http-client = { path = "vendor/wasi-http-client" }

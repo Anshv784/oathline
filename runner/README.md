@@ -1,8 +1,8 @@
-# verdict-runner
+# oathline-runner
 
 The program OutLayer runs inside a TDX worker for each `ask`. It:
 
-1. refuses unless `NEAR_PREDECESSOR_ID` equals `VERDICT_CONTRACT` from its secrets;
+1. refuses unless `NEAR_PREDECESSOR_ID` equals `OATHLINE_CONTRACT` from its secrets;
 2. POSTs the request body it was given, byte for byte, to
    `https://cloud-api.near.ai/v1/chat/completions` exactly once, with
    `x-no-aliasing: true` and `Accept-Encoding: identity`;
@@ -18,13 +18,13 @@ It does not judge the answer; the contract does.
 | Name | Value |
 |---|---|
 | `NEARAI_API_KEY` | A NEAR AI Cloud API key |
-| `VERDICT_CONTRACT` | The Verdict contract account, e.g. `verdict.you.testnet` |
+| `OATHLINE_CONTRACT` | The Oathline contract account, e.g. `verdict.you.testnet` |
 
 ## Build and pin
 
 ```sh
 cargo build --release --target wasm32-wasip2
-shasum -a 256 target/wasm32-wasip2/release/verdict-runner.wasm
+shasum -a 256 target/wasm32-wasip2/release/oathline-runner.wasm
 ```
 
 The contract runs the runner only by that hash (`set_runner`). The NEAR AI

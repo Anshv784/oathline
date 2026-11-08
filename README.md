@@ -1,4 +1,4 @@
-# Verdict
+# Oathline
 
 **AI answers a NEAR contract can verify for itself.**
 
@@ -8,7 +8,7 @@ contract that acted on an AI answer had to trust whoever relayed it. NEAR's
 own [`verifiable-ai-dao`](https://github.com/NearDeFi/verifiable-ai-dao)
 example says so: verifying the AI is "TODO".
 
-Verdict does the whole check inside a NEAR contract:
+Oathline does the whole check inside a NEAR contract:
 
 1. **A model is admitted** only after the contract verifies, on chain, its
    Intel TDX quote (through NEAR's locked
@@ -23,11 +23,11 @@ Verdict does the whole check inside a NEAR contract:
 3. **The answer is accepted** only if the registered key signed
    `sha256(request)` and `sha256(response)`, and the answer is one of the
    allowed options. The raw response and signature are kept, so anyone can
-   check the verdict again from chain state.
+   check the oathline again from chain state.
 
 Any contract can then act on the answer. Two example contracts do, live on
 testnet: `examples/charter-dao` screens DAO proposals against a charter, and
-`examples/verdict-market` resolves prediction markets YES, NO or INVALID from
+`examples/oathline-market` resolves prediction markets YES, NO or INVALID from
 written rules and posted evidence, with no token vote.
 
 > Built for NEAR HACKATHON (Nov 2026). All code in this repository was
@@ -36,7 +36,7 @@ written rules and posted evidence, with no token vote.
 
 ## Try it
 
-**Recompute a verdict in your browser** (no keys, no network):
+**Recompute a oathline in your browser** (no keys, no network):
 
 1. `cd app && npm install && npm run dev`
 2. Open http://localhost:5173 and click request `#0`.
@@ -46,13 +46,13 @@ written rules and posted evidence, with no token vote.
    this response**. See it refused: "The signature does not cover this
    response".
 
-Without `VITE_VERDICT_CONTRACT` the app shows a sample signed by a fixed
+Without `VITE_OATHLINE_CONTRACT` the app shows a sample signed by a fixed
 test key and says so in a banner. With it, it reads a live deployment, and
 the tamper panel also asks the contract (`check_response`) to judge your edit.
 
 **Verify a real NEAR AI attestation locally** (network, no keys):
 
-1. `cargo run -p verdict-registrar -- policy --model Qwen/Qwen3.8-27B --out /tmp/policy.json`
+1. `cargo run -p oathline-registrar -- policy --model Qwen/Qwen3.8-27B --out /tmp/policy.json`
 2. See `Verified deployment: TCB UpToDate, MRTD …, compose …`. The tool
    fetched a live attestation, verified the Intel quote with dcap-qvl (the
    library `tee-verifier` runs), and applied every binding rule the
@@ -66,12 +66,12 @@ with warnings denied.
 
 ```
           start_registration ─► nonce
-NEAR AI ──attestation(nonce)──► verdict-registrar ──register_model──► Verdict ──verify_quote──► tee-verifier
+NEAR AI ──attestation(nonce)──► oathline-registrar ──register_model──► Oathline ──verify_quote──► tee-verifier
                                 (checks locally first)                   │
                                                                          ▼ binding rules + policy
                                                                registered signing key (7 days)
 
-consumer ──ask(model, instructions, submission, options)──► Verdict ──request_execution──► OutLayer (TDX)
+consumer ──ask(model, instructions, submission, options)──► Oathline ──request_execution──► OutLayer (TDX)
                                                               ▲                                │ runner: one POST of
                                                               │                                │ the exact body to
                                                               └──── on_inference ◄─────────────┘ NEAR AI + signature
@@ -81,25 +81,25 @@ consumer ──ask(model, instructions, submission, options)──► Verdict �
 
 | Path | What it is |
 |---|---|
-| [`crates/verdict-core`](crates/verdict-core) | `no_std` rules shared by everything: attestation binding (report_data, MRCONFIGID, RTMR3 replay, compose hash, deployment policy) and the response-signature check. Tested on a real Qwen3.8-27B attestation. |
-| [`contracts/verdict`](contracts/verdict) | The NEAR contract: model registry, `ask`, the OutLayer callback, and views that expose every byte needed to re-check an answer. |
-| [`runner`](runner) | The OutLayer program (WASI P2). Sends the request once, never retries it, fetches the signature, and refuses callers other than the Verdict contract. |
+| [`crates/oathline-core`](crates/oathline-core) | `no_std` rules shared by everything: attestation binding (report_data, MRCONFIGID, RTMR3 replay, compose hash, deployment policy) and the response-signature check. Tested on a real Qwen3.8-27B attestation. |
+| [`contracts/oathline`](contracts/oathline) | The NEAR contract: model registry, `ask`, the OutLayer callback, and views that expose every byte needed to re-check an answer. |
+| [`runner`](runner) | The OutLayer program (WASI P2). Sends the request once, never retries it, fetches the signature, and refuses callers other than the Oathline contract. |
 | [`tools/registrar`](tools/registrar) | CLI that fetches and verifies attestations locally and writes `set_model_policy` / `register_model` arguments. It never signs. |
-| [`examples/charter-dao`](examples/charter-dao) | A consumer: proposals are screened against a charter through Verdict before they reach a vote. |
-| [`examples/verdict-market`](examples/verdict-market) | A second consumer: a prediction market. Bets on YES/NO; after closing, anyone posts evidence and Verdict decides YES, NO or INVALID. Winners split the pot, INVALID refunds everyone, an unverified answer never settles it. |
+| [`examples/charter-dao`](examples/charter-dao) | A consumer: proposals are screened against a charter through Oathline before they reach a vote. |
+| [`examples/oathline-market`](examples/oathline-market) | A second consumer: a prediction market. Bets on YES/NO; after closing, anyone posts evidence and Oathline decides YES, NO or INVALID. Winners split the pot, INVALID refunds everyone, an unverified answer never settles it. |
 | [`app`](app) | Read-only explorer with in-browser re-verification and a tamper panel. |
 | [`SECURITY.md`](SECURITY.md) | Threat model: what is proven, what is trusted, and what is not covered. |
 
-## Using Verdict from a contract
+## Using Oathline from a contract
 
 ```rust
-#[ext_contract(ext_verdict)]
-trait Verdict {
+#[ext_contract(ext_oathline)]
+trait Oathline {
     fn ask(&mut self, model: String, instructions: String, submission: String,
            options: Vec<String>, notify: Option<bool>) -> Settled;
 }
 
-ext_verdict::ext("verdict.testnet".parse().unwrap())
+ext_oathline::ext("verdict.testnet".parse().unwrap())
     .with_attached_deposit(NearToken::from_millinear(150))
     .with_static_gas(Gas::from_tgas(170))
     .ask(model, charter, proposal, vec!["APPROVE".into(), "REJECT".into()], None)
@@ -116,14 +116,14 @@ to OutLayer, which refunds what it does not use.
 
 | | |
 |---|---|
-| Verdict | [`verdict.anshv784.testnet`](https://testnet.nearblocks.io/address/verdict.anshv784.testnet) |
+| Oathline | [`verdict.anshv784.testnet`](https://testnet.nearblocks.io/address/verdict.anshv784.testnet) |
 | Consumer: grant DAO | [`charter-dao.anshv784.testnet`](https://testnet.nearblocks.io/address/charter-dao.anshv784.testnet) |
 | Consumer: prediction market | [`market.anshv784.testnet`](https://testnet.nearblocks.io/address/market.anshv784.testnet) |
 | Registered model | `Qwen/Qwen3.8-27B`, key `0x835ab53d20294ef795906dff21ae4c045336aa26`, TCB `UpToDate`, valid until Nov 21, 2026 |
 | Latest registration tx | [`A4cDr6bT…`](https://testnet.nearblocks.io/txns/A4cDr6bTTyx89Bou2UsuyqsofRH97PxQV8TwCrQx387K) (first: [`5ZAVDFT5…`](https://testnet.nearblocks.io/txns/5ZAVDFT5WHyhxiZK7ZaqnToFztc5EAUAibhYTv7Sn2Lo)) |
 
 The registration used live NEAR AI evidence fetched with the contract's
-nonce. Gas: `tee-verifier` 175.8 Tgas for the Intel quote, Verdict's binding
+nonce. Gas: `tee-verifier` 175.8 Tgas for the Intel quote, Oathline's binding
 rules 7 Tgas, 194.8 Tgas in total.
 
 ```sh
@@ -131,11 +131,11 @@ near contract call-function as-read-only verdict.anshv784.testnet get_model \
   json-args '{"model":"Qwen/Qwen3.8-27B"}' network-config testnet now
 ```
 
-### Live verdicts: grant DAO
+### Live oathlines: grant DAO
 
-Each was one `submit_proposal` transaction to `charter-dao`. Verdict asked
+Each was one `submit_proposal` transaction to `charter-dao`. Oathline asked
 NEAR AI once through the
-[runner release](https://github.com/Anshv784/verdict/releases/tag/runner-v0.1.0)
+[runner release](https://github.com/Anshv784/oathline/releases/tag/runner-v0.1.0)
 (SHA-256 `1654b6a2…`) on OutLayer, checked the enclave signature on chain,
 and settled in the same transaction tree. Each OutLayer run cost 0.0016 NEAR;
 the rest of the deposit was refunded.
@@ -156,7 +156,7 @@ To browse them with in-browser re-verification:
 
 ```sh
 cd app && npm install
-printf 'VITE_VERDICT_CONTRACT=verdict.anshv784.testnet\nVITE_MARKET_CONTRACT=market.anshv784.testnet\n' > .env.local
+printf 'VITE_OATHLINE_CONTRACT=verdict.anshv784.testnet\nVITE_MARKET_CONTRACT=market.anshv784.testnet\n' > .env.local
 npm run dev
 ```
 
@@ -170,10 +170,10 @@ near contract call-function as-transaction charter-dao.anshv784.testnet submit_p
 
 See `"screening": {"status": "approved" | "rejected", "reason": …}` in the result.
 
-### Live verdicts: prediction market
+### Live oathlines: prediction market
 
 Two markets on `market.anshv784.testnet`, each with one YES and one NO bettor.
-After closing, `resolve` posted the evidence and asked Verdict once.
+After closing, `resolve` posted the evidence and asked Oathline once.
 
 | Market | Evidence posted | Answer | Tx |
 |---|---|---|---|
@@ -200,7 +200,7 @@ near contract call-function as-transaction $M claim json-args '{"market_id":"<id
   prepaid-gas '30.0 Tgas' attached-deposit '0 NEAR' sign-as $ME $NET sign-with-keychain send
 ```
 
-Verdict proves the model judged *this evidence* under *these rules*. It does
+Oathline proves the model judged *this evidence* under *these rules*. It does
 not make the evidence true, so the evidence is stored with the market.
 
 ## Deploying
@@ -217,7 +217,7 @@ key, and it refuses to run without `CONFIRM=yes`.
   signing key, with different OS images and app configurations. A policy is
   therefore a list of `(image, compose hash)` pairs, matched whole.
 - `tee-verifier.testnet` has no access keys (it cannot be changed) and was
-  built from near/mpc rev `dcd67e0`; Verdict pins its interface to that rev.
+  built from near/mpc rev `dcd67e0`; Oathline pins its interface to that rev.
 - OutLayer evaluates secret access against the transaction signer, not the
   calling contract, so the runner checks `NEAR_PREDECESSOR_ID` itself.
 

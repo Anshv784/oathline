@@ -19,7 +19,7 @@ export class RpcError extends Error {}
 export async function view<T>(contract: string, method: string, args: object = {}, signal?: AbortSignal): Promise<T> {
   const body = JSON.stringify({
     jsonrpc: "2.0",
-    id: "verdict-app",
+    id: "oathline-app",
     method: "query",
     params: {
       request_type: "call_function",

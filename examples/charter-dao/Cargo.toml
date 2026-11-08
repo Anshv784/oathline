@@ -1,6 +1,6 @@
 [package]
 name = "charter-dao"
-description = "A DAO that screens every proposal against its charter with a Verdict-verified model before it reaches a vote."
+description = "A DAO that screens every proposal against its charter with a Oathline-verified model before it reaches a vote."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
