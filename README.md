@@ -7,7 +7,7 @@
 <p align="center"><b>AI answers a NEAR smart contract can verify for itself, under oath.</b></p>
 
 <p align="center">
-  Live on NEAR testnet · 6 sworn answers · 2 contracts using it · MIT
+  <a href="https://oathline.anshverma.tech"><b>oathline.anshverma.tech</b></a> · live on NEAR testnet · 6 sworn answers · 2 contracts using it · MIT
 </p>
 
 ---
@@ -52,13 +52,13 @@ near contract call-function as-read-only verdict.anshv784.testnet check_response
 
 See `"accepted": false, "error": "signed text does not match this request and response"`. One changed word breaks the oath.
 
-**3. Browse the record**, with every check redone in your browser by code that shares nothing with the contract:
+**3. Browse the record** at **https://oathline.anshverma.tech**, where every check is redone in your browser by code that shares nothing with the contract. Or run it locally:
 
 ```sh
 cd app && npm install && npm run dev        # reads the live testnet contracts (app/.env.local)
 ```
 
-Open http://localhost:5173 and click any record: five checks pass and the seal is pressed. Under **Cross-examination**, click **I. Change it to APPROVE**, then **II. Present it**: your browser and the live contract both refuse it.
+Open https://oathline.anshverma.tech (or http://localhost:5173) and click any record: five checks pass and the seal is pressed. Under **Cross-examination**, click **I. Change it to APPROVE**, then **II. Present it**: your browser and the live contract both refuse it.
 
 **4. Ask your own question** (0.15 NEAR deposit; the unused part is refunded):
 
