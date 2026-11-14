@@ -191,3 +191,5 @@ Built for the NEAR Hackathon (Nov 2026). All code was written during the hackath
 ## License
 
 MIT
+
+Also built for the NEAR hackathon by the same builder: [Facedown](https://github.com/Anshv784/facedown), no-limit Hold'em where the dealer is an OutLayer TEE and every hand is audited on chain ([facedown.anshverma.tech](https://facedown.anshverma.tech)).
